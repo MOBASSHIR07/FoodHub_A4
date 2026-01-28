@@ -29,7 +29,9 @@ model User {
   isActive        Boolean?         @default(true)
   providerProfile ProviderProfile?
 
-  status String? @default("ACTIVE")
+  status  String?  @default("ACTIVE")
+  orders  Order[]
+  reviews Review[]
 
   @@map("user")
 }
@@ -96,6 +98,92 @@ model ProviderProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  meals     Meal[]
 
   @@map("provider_profile")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique 
+  image     String?
+  meals     Meal[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Meal {
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  image       String?
+  isAvailable Boolean @default(true)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("meals")
+}
+
+model Order {
+  id              String  @id @default(uuid())
+  orderNumber     String  @unique 
+  totalAmount     Float
+  deliveryAddress String
+  status          String  @default("PENDING") // PENDING, CONFIRMED, COOKING, DELIVERED, CANCELLED
+  paymentStatus   String  @default("UNPAID") 
+  transactionId   String? @unique
+
+ 
+  customerId String
+  customer   User   @relation(fields: [customerId], references: [id])
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id       String @id @default(uuid())
+  quantity Int
+  price    Float 
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id])
+
+  @@map("order_items")
+}
+
+model Review {
+  id      String  @id @default(uuid())
+  rating  Int
+  comment String?
+
+  customerId String
+  customer   User   @relation(fields: [customerId], references: [id])
+
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("reviews")
 }
