@@ -39,7 +39,11 @@ const deleteMealDB = async (id: string, providerId: string) => {
 const getAllMealDB = async(filter:any)=>{
 
 
-    const {cuisine , dietaryPreferences, price  } = filter
+    const {cuisine , dietaryPreferences, price, page, limit } = filter
+    
+    const p = Number(page) || 1;      
+    const l = Number(limit) || 10;    
+    const skip = (p - 1) * l;         
     
     let where:any = {}
 
@@ -54,13 +58,17 @@ const getAllMealDB = async(filter:any)=>{
    const sortOrder = price === "true" ? "desc" : "asc";
     
 
-    const [ data ] = await prisma.$transaction([
-        prisma.meal.findMany({where , orderBy:{price:sortOrder}, include:{category:true,provider:true}}),
-        
+    const [ data, count ] = await prisma.$transaction([
+        prisma.meal.findMany({where , orderBy:{price:sortOrder} , 
+            skip:skip, take:l,
+            
+            include:{category:true,provider:true}
+        }),
+        prisma.meal.count({where})
     ])
 
-    
-    return { data };
+
+    return { data, count };
 
 }
 
