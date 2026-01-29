@@ -67,8 +67,10 @@ const getAllMealDB = async(filter:any)=>{
         prisma.meal.count({where})
     ])
 
+    const totalPage = Math.ceil(count / l);
 
-    return { data, count };
+
+    return { data, meta : {count , totalPage, currentPage: p }};
 
 }
 

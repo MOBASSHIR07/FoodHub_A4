@@ -82,6 +82,22 @@ const deleteCategory = async (req: Request, res: Response, next: NextFunction) =
 };
 
 
+const getAllOrders = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await adminService.getAllOrdersDB(req.query);
+
+        res.status(200).json({
+            success: true,
+            message: "All system orders retrieved successfully",
+            meta: result.meta,
+            data: result.orders
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 
 export const adminController = {
     getAllUsers,
@@ -89,7 +105,8 @@ export const adminController = {
     createCategory,
     getAllCategories,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    getAllOrders
 
 
 }

@@ -54,13 +54,61 @@ const deleteCategoryDB = async (id: string) => {
     return await prisma.category.delete({ where: { id } });
 };
 
+
+
+const getAllOrdersDB = async (query: any) => {
+    const { status, page, limit } = query;
+
+    const p = Number(page) || 1;
+    const l = Number(limit) || 10;
+    const skip = (p - 1) * l;
+
+    const where: any = {};
+    if (status){
+         where.status = status;
+    }
+
+    const [orders, total] = await prisma.$transaction([
+        prisma.order.findMany({
+            where,
+            skip,
+            take: l,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                customer: {
+                    select: { name: true, email: true } 
+                },
+                items: {
+                    include: {
+                        meal: {
+                            select: { name: true, provider: { select: { businessName:true} } }
+                        }
+                    }
+                }
+            }
+        }),
+        prisma.order.count({ where })
+    ]);
+
+    return {
+        orders,
+        meta: {
+            total,
+            page: p,
+            limit: l,
+            totalPage: Math.ceil(total / l)
+        }
+    };
+};
+
 export const adminService = {
     getAllUsersDB,
     updateStatusDB,
     createCategoryDB,
     getAllCategoriesDB,
     updateCategoryDB,
-    deleteCategoryDB
+    deleteCategoryDB,
+    getAllOrdersDB
 
 
 

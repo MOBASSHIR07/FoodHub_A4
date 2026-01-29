@@ -70,7 +70,7 @@ const getAllMeal = async (req: Request, res: Response, next: NextFunction) => {
             success: true,
             message: "All Meal Retrive",
             data: result.data,
-            totalCount : result.count
+           meta: result.meta
         });
 
     } catch (error: any) {
