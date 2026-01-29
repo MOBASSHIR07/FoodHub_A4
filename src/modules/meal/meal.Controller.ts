@@ -4,10 +4,10 @@ import { prisma } from "../../lib/prisma.js";
 
 const createMeal = async (req: Request, res: Response, next: NextFunction) => {
     try {
-   
-        const providerId = req.user?.id!; 
+
+        const providerId = req.user?.id!;
         const profile = await prisma.providerProfile.findUnique({
-            where: { userId: providerId } 
+            where: { userId: providerId }
         });
         if (!profile) {
             throw new Error("Provider profile not found. Please complete your profile first.");
@@ -25,6 +25,41 @@ const createMeal = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+const updateMeal = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {id}   = req.params!
+         if(!id || Array.isArray(id)){
+            throw new Error("Id Required")
+        }
+        const userId = req.user?.id
+
+       const profile = await prisma.providerProfile.findUnique({
+            where: { id: userId! }
+        });
+        
+        if(!profile){
+            throw new Error("Provider not found")
+        }
+       
+        const result = await mealService.updateMealDB(id, profile?.id, req.body);
+        res.status(200).json({ success: true, message: "Meal updated", data: result });
+    } catch (error) { next(error); }
+};
+
+const deleteMeal = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        if(!id || Array.isArray(id)){
+            throw new Error("Id Required")
+        }
+        const providerId = req.user?.id!;
+        await mealService.deleteMealDB(id, providerId);
+        res.status(200).json({ success: true, message: "Meal deleted" });
+    } catch (error) { next(error); }
+};
+
 export const mealController = {
-    createMeal
+    createMeal,
+    updateMeal,
+    deleteMeal
 };
