@@ -89,7 +89,7 @@ model Verification {
 model ProviderProfile {
   id           String  @id @default(uuid())
   businessName String
-  address      String
+  address      String?
   description  String?
   coverImage   String?
   rating       Float   @default(0.0)

@@ -26,6 +26,7 @@ const getProviderByIdDB = async (providerId: string) => {
 
 
 
+
 export const providerService = {
     getAllProvidersDB,
     getProviderByIdDB

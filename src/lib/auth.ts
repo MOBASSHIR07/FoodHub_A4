@@ -1,6 +1,5 @@
 import { betterAuth, string } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-// If your Prisma file is located elsewhere, you can change the path
 import { PrismaClient } from "../../generated/prisma/client.js";
 import { prisma } from "./prisma.js";
 import { phoneNumber, role } from "better-auth/plugins";
@@ -11,11 +10,48 @@ export const auth = betterAuth({
         provider: "postgresql",
 
     }),
-    trustedOrigins:[process.env.TRUSTED_AUTH_URL!],
+    trustedOrigins: [process.env.TRUSTED_AUTH_URL!],
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
     },
+
+    // -------------------- better auth logic, like i am writing on controller and service
+    databaseHooks: {
+        user: {
+            create: {
+                after: async (user) => {
+                    if (user.role ==="PROVIDER"){
+                        await prisma.providerProfile.create({
+                            data:{
+                                userId:user.id,
+                                businessName: `${user.name || 'New'}'s Kitchen `,
+
+                            }
+                        })
+                    }
+                    }
+            }
+        },
+        session:{
+            create:{
+                before: async(session)=>{
+                 
+                    const user = await prisma.user.findUnique({
+                        where:{
+                            id: session.userId
+                        }
+                    })
+                    if(user?.status==="SUSPENDED" || user?.isActive===false){
+                        throw new Error("ACCOUNT_SUSPENDED")
+                    }
+                }
+                
+            }
+        }
+    },
+
+    //------------------------------ additional fields -------------------------------
     user: {
         additionalFields: {
             role: {
@@ -32,10 +68,10 @@ export const auth = betterAuth({
                 required: false,
                 defaultValue: true,
             },
-            status :{
-                type:"string",
-                required:false,
-                defaultValue:"ACTIVE"
+            status: {
+                type: "string",
+                required: false,
+                defaultValue: "ACTIVE"
 
             }
         }
