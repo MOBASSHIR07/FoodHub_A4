@@ -69,6 +69,11 @@ const getAllMealDB = async (filter: any) => {
                     businessName: true,
                     address: true
                 }
+            },
+            reviews:{
+                select:{
+                    rating:true
+                }
             }
         }
     });
