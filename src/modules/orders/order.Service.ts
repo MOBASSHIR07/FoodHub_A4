@@ -59,14 +59,40 @@ const createOrderDB = async (customerId: string, payload: any) => {
 
 }
 
-const updateOrderStatusDB = async (id: string, providerId: string, status: string) => {
- 
+const updateOrderStatusDB = async (id: string, userId: string, status: string, role: string) => {
+    if (role === "CUSTOMER") {
+        const currentOrder = await prisma.order.findFirst({
+            where: {
+                id: id,
+                customerId: userId
+            }
+        });
+
+        if (!currentOrder) throw new Error("Order not found");
+
+
+        if (status !== "CANCELLED") {
+            throw new Error("Invalid action: Customers can only cancel orders.");
+        }
+
+
+        if (currentOrder.status !== "PLACED") {
+            throw new Error("You cannot cancel the order now (it is already confirmed or preparing)");
+        }
+
+        return await prisma.order.update({
+            where: { id },
+            data: { status }
+        });
+    }
+
+
     const order = await prisma.order.findFirst({
         where: {
             id,
             items: {
                 some: {
-                    meal: { provider: { userId: providerId } }
+                    meal: { provider: { userId } }
                 }
             }
         }
@@ -74,7 +100,6 @@ const updateOrderStatusDB = async (id: string, providerId: string, status: strin
 
     if (!order) throw new Error("Order not found or unauthorized");
 
-    
     return await prisma.order.update({
         where: { id },
         data: { status }
@@ -127,7 +152,7 @@ const getProviderOrdersDB = async (userId: string) => {
                 some: {  // table joining 
                     meal: {
                         provider: {
-                            userId: userId 
+                            userId: userId
                         }
                     }
                 }
@@ -164,12 +189,12 @@ const getOrderTrackingDB = async (orderId: string, userId: string) => {
     return await prisma.order.findFirst({
         where: {
             id: orderId,
-           customerId:userId
+            customerId: userId
         },
-        select:{
-            id:true,
-            status:true,
-            updatedAt:true
+        select: {
+            id: true,
+            status: true,
+            updatedAt: true
 
         }
     });

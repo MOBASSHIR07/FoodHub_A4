@@ -36,43 +36,57 @@ const deleteMealDB = async (id: string, providerId: string) => {
 };
 
 
-const getAllMealDB = async(filter:any)=>{
+const getAllMealDB = async (filter: any) => {
+    const { cuisine, dietaryPreferences, price, page, limit } = filter;
+
+   
+    const p = Number(page) || 1;
+    const l = Number(limit) || 10;
+    const skip = (p - 1) * l;
 
 
-    const {cuisine , dietaryPreferences, price, page, limit } = filter
-    
-    const p = Number(page) || 1;      
-    const l = Number(limit) || 10;    
-    const skip = (p - 1) * l;         
-    
-    let where:any = {}
+    let where: any = {};
 
-    if(cuisine){
-        where.cuisine = { equals:cuisine , mode:"insensitive"}
+    if (cuisine) {
+        where.cuisine = { equals: cuisine, mode: "insensitive" };
     }
-    
-    if(dietaryPreferences){
-        where.dietaryPreferences = { equals:dietaryPreferences , mode:"insensitive"}
-    }
-    
-   const sortOrder = price === "true" ? "desc" : "asc";
-    
 
-    const [ data, count ] = await prisma.$transaction([
-        prisma.meal.findMany({where , orderBy:{price:sortOrder} , 
-            skip:skip, take:l,
-            
-            include:{category:true,provider:true}
-        }),
-        prisma.meal.count({where})
-    ])
+    if (dietaryPreferences) {
+        where.dietaryPreferences = { equals: dietaryPreferences, mode: "insensitive" };
+    }
+
+    const sortOrder = price === "desc" ? "desc" : "asc";
+
+    const data = await prisma.meal.findMany({
+        where,
+        orderBy: { price: sortOrder },
+        skip: skip,
+        take: l,
+        include: {
+            category: true,
+            provider: {
+                select: {
+                    businessName: true,
+                    address: true
+                }
+            }
+        }
+    });
+
+   
+    const count = await prisma.meal.count({ where });
 
     const totalPage = Math.ceil(count / l);
 
-
-    return { data, meta : {count , totalPage, currentPage: p }};
-
-}
+    return { 
+        data, 
+        meta: { 
+            count, 
+            totalPage, 
+            currentPage: p 
+        } 
+    };
+};
 
 const getMealByIdDB = async (mealId: string) => {
     return await prisma.meal.findUnique({
